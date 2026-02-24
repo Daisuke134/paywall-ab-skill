@@ -1,0 +1,17 @@
+{
+  "apps": {
+    "your_app": {
+      "rc_project_id": "projXXXXXXXX",
+      "mixpanel_project_id": 0,
+      "default_offering_id": "ofrngXXXXXXXX",
+      "monthly_product_id": "prodXXXXXXXX",
+      "slack_channel": "CXXXXXXXXXX",
+      "active_experiment": {
+        "experiment_id": "prexpXXXXXXXX",
+        "variant_a_offering_id": "ofrngXXXXXXXX",
+        "variant_b_offering_id": "ofrngXXXXXXXX",
+        "start_date": "YYYY-MM-DD"
+      }
+    }
+  }
+}
