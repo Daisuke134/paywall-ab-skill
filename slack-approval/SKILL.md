@@ -19,7 +19,7 @@ metadata:
 const { requestApproval } = require('../slack-approval/scripts/approve');
 
 const result = await requestApproval({
-  channel: 'C091G3PKHL2',   // 送信先チャンネルID
+  channel: 'C0XXXXXXXXX',   // 送信先チャンネルID
   title:   '📧 メール返信',
   detail:  '宛先: 山田教授\n本文: お世話になっております...'
 });

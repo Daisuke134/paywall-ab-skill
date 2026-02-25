@@ -13,7 +13,7 @@ RevenueCat Experiments を使った Paywall コピーの自動 A/B テストル�
 
 | モード | トリガー | やること |
 |--------|---------|---------|
-| `setup` | 「paywall A/B テストを開始して」 | Offering作成 → AI Paywall生成 → Daisにexperiment作成依頼 → experiment_id受取 → Cron登録 → Slack通知 |
+| `setup` | 「paywall A/B テストを開始して」 | Offering作成 → AI Paywall生成 → ユーザーにexperiment作成依頼 → experiment_id受取 → Cron登録 → Slack通知 |
 | `check_in` | cron: 実験開始から3日ごと 7:00 JST / 「check_in」 | RC MCP で実験情報取得 → Day N メッセージを Slack に送信 → ユーザー返信を待つ |
 | `analyze` | ユーザーが「A勝ち」or「B勝ち」と返信 | 勝者/敗者の Offering テキスト取得 → LLM 分析（なぜ勝ったか）→ 新コピー3パターン生成 → Slack 送信 |
 | `create_variant` | ユーザーが「はい」or「1」「2」「3」で選択 | Pencil MCP でテキスト差替え → RC 新 Offering 作成 → Slack 承認ゲート → RC 新 Experiment 作成依頼 |
@@ -26,23 +26,23 @@ RevenueCat Experiments を使った Paywall コピーの自動 A/B テストル�
 
 ### apps.json パス
 ```
-/Users/anicca/.openclaw/workspace/paywall-ab/apps.json
+~/.openclaw/workspace/paywall-ab/apps.json
 ```
 
 ### 形式
 ```json
 {
   "apps": {
-    "anicca": {
-      "rc_project_id": "projbb7b9d1b",
-      "mixpanel_project_id": 3970220,
-      "default_offering_id": "ofrng78a01eb506",
-      "monthly_product_id": "prod8eb90326e4",
-      "slack_channel": "C091G3PKHL2",
+    "your_app": {
+      "rc_project_id": "YOUR_RC_PROJECT_ID",
+      "mixpanel_project_id": YOUR_MIXPANEL_PROJECT_ID,
+      "default_offering_id": "YOUR_DEFAULT_OFFERING_ID",
+      "monthly_product_id": "YOUR_MONTHLY_PRODUCT_ID",
+      "slack_channel": "YOUR_SLACK_CHANNEL_ID",
       "active_experiment": {
-        "experiment_id": "prexpbac56abf66",
-        "variant_a_offering_id": "ofrng78a01eb506",
-        "variant_b_offering_id": "ofrng586631f021",
+        "experiment_id": "YOUR_EXPERIMENT_ID",
+        "variant_a_offering_id": "YOUR_DEFAULT_OFFERING_ID",
+        "variant_b_offering_id": "YOUR_VARIANT_B_OFFERING_ID",
         "start_date": "2026-03-03"
       }
     }
@@ -55,25 +55,23 @@ RevenueCat Experiments を使った Paywall コピーの自動 A/B テストル�
 ### cronメッセージのフォーマット（アプリ名指定）
 ```
 Run paywall-ab skill in check_in mode.
-app_id: anicca
-apps_config: /Users/anicca/.openclaw/workspace/paywall-ab/apps.json
+app_id: your_app
+apps_config: ~/.openclaw/workspace/paywall-ab/apps.json
 ```
 
 ---
 
-## 現在稼働中の実験（2026-03-03〜）
+## セットアップ後の稼働確認チェックリスト
 
-| 項目 | 値 |
-|------|-----|
-| app_id | `anicca` |
-| experiment_id | `prexpbac56abf66` ⚠️ RC Dashboardで作成後に確認要 |
-| Variant A (現行 default) | `ofrng78a01eb506` (anicca) |
-| Variant B (AI生成 v2) | `ofrng586631f021` (anicca_paywall_ai_v2) |
-| Paywall v2 | `pw5d8ebd3e8a674b3e` |
-| cron | 3日ごと 7:00 JST — Mac Mini 登録済み (`enabled: true`) |
-| RC Dashboard | `https://app.revenuecat.com/projects/bb7b9d1b/experiments` |
+| 項目 | 確認方法 |
+|------|---------|
+| `apps.json` 作成済み | `~/.openclaw/workspace/paywall-ab/apps.json` が存在するか |
+| RC Offering 作成済み | RC Dashboard → Offerings で確認 |
+| RC Experiment 作成済み | RC Dashboard → Experiments → Start 済みか |
+| cron 登録済み | `~/.openclaw/cron/jobs.json` に `paywall-ab` エントリがあるか |
+| RC Dashboard | `https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/experiments` |
 
-**⚠️ 次のアクション（Dais）:** RC Dashboardで実験を作成してexperiment_idを確認 → cronメッセージのIDを更新
+**⚠️ セットアップ後:** RC Dashboardで実験を作成してexperiment_idを確認 → `apps.json` の `active_experiment.experiment_id` を更新
 
 ---
 
@@ -82,10 +80,10 @@ apps_config: /Users/anicca/.openclaw/workspace/paywall-ab/apps.json
 | Key | 値の場所 |
 |-----|---------|
 | `REVENUECAT_V2_SECRET_KEY` | Mac Mini `.env` |
-| `REVENUECAT_PROJECT_ID` | `projbb7b9d1b`（固定） |
+| `REVENUECAT_PROJECT_ID` | `YOUR_RC_PROJECT_ID`（固定） |
 | `OPENAI_API_KEY` | Mac Mini `.env` |
 | `SLACK_BOT_TOKEN` | Mac Mini `.env` |
-| `SLACK_METRICS_CHANNEL` | `C091G3PKHL2`（#metrics） |
+| `SLACK_METRICS_CHANNEL` | `YOUR_SLACK_CHANNEL_ID`（#metrics） |
 
 ---
 
@@ -137,15 +135,15 @@ apps_config: /Users/anicca/.openclaw/workspace/paywall-ab/apps.json
 
 ## MODE 1: セットアップ（新規実験を作る時）
 
-**現行 default Offering:** `ofrng78a01eb506` (anicca) ← Variant A に使う
-**月額 product ID:** `prod8eb90326e4` (ai.anicca.app.ios.monthly、7日トライアル付き)
+**現行 default Offering:** `YOUR_DEFAULT_OFFERING_ID` (anicca) ← Variant A に使う
+**月額 product ID:** `YOUR_MONTHLY_PRODUCT_ID` (com.yourapp.monthly、7日トライアル付き)
 
 ### Step 1. 新 Offering 作成（エージェントが MCP 実行）
 
 ```
 mcp__revenuecat__mcp_RC_create_offering:
-  project_id: "projbb7b9d1b"
-  lookup_key: "anicca_variant_{YYYYMMDD}"
+  project_id: "YOUR_RC_PROJECT_ID"
+  lookup_key: "your_app_variant_{YYYYMMDD}"
   display_name: "Anicca Variant {date}"
 ```
 
@@ -153,22 +151,22 @@ mcp__revenuecat__mcp_RC_create_offering:
 
 ```
 mcp__revenuecat__mcp_RC_create_package:
-  project_id: "projbb7b9d1b"
+  project_id: "YOUR_RC_PROJECT_ID"
   offering_id: "<Step1のoffering_id>"
   lookup_key: "$rc_monthly"
   display_name: "Monthly Plan"
 
 mcp__revenuecat__mcp_RC_attach_products_to_package:
-  project_id: "projbb7b9d1b"
+  project_id: "YOUR_RC_PROJECT_ID"
   package_id: "<package_id>"
-  products: [{ product_id: "prod8eb90326e4", eligibility_criteria: "all" }]
+  products: [{ product_id: "YOUR_MONTHLY_PRODUCT_ID", eligibility_criteria: "all" }]
 ```
 
 ### Step 3. AI Paywall 自動生成（エージェントが MCP 実行）
 
 ```
 mcp__revenuecat__mcp_RC_create_design_system_paywall_generation_job:
-  project_id: "projbb7b9d1b"
+  project_id: "YOUR_RC_PROJECT_ID"
   offering_id: "<Step1のoffering_id>"
   design_system: <Anicca デザインシステム JSON（下記参照）>
 → HTTP 202: { id: "pwj...", status: "queued" }
@@ -178,15 +176,15 @@ mcp__revenuecat__mcp_RC_create_design_system_paywall_generation_job:
 
 60秒待機後に確認:
 ```bash
-GET https://api.revenuecat.com/v2/projects/projbb7b9d1b/paywalls
+GET https://api.revenuecat.com/v2/projects/YOUR_RC_PROJECT_ID/paywalls
 → offering_id が一致するエントリが出たら完了。paywall_id を記録する。
 ```
 
-### Step 4. Dais に Experiment 作成を依頼（RC API 非対応のため人間のみ可能）
+### Step 4. ユーザーに Experiment 作成を依頼（RC API 非対応のため人間のみ可能）
 
 **RC API v2 に Experiment 作成エンドポイントは存在しない（確認済み: 404 resource_missing）。Dashboard のみ。**
 
-エージェントは Slack #metrics に以下を投稿して Dais の操作を待つ:
+エージェントは Slack #metrics に以下を投稿して ユーザーの操作を待つ:
 
 ```
 🔧 Paywall A/B テスト準備完了
@@ -194,26 +192,26 @@ GET https://api.revenuecat.com/v2/projects/projbb7b9d1b/paywalls
 新しい Paywall が RC に生成されました。
 以下の手順で Experiment を作成して、experiment_id をエージェントに教えてください。
 
-1. https://app.revenuecat.com/projects/bb7b9d1b/experiments → New Experiment
-2. Variant A: ofrng78a01eb506 (anicca — 現行 default)
+1. https://app.revenuecat.com/projects/YOUR_PROJECT_SHORT_ID/experiments → New Experiment
+2. Variant A: YOUR_DEFAULT_OFFERING_ID (anicca — 現行 default)
 3. Variant B: {new_offering_id} ({lookup_key})
 4. Traffic split: 50/50 → Start
 5. URL に表示される experiment_id (prexpXXXXXXXX) を Claude Code に送ってください
 
 Paywall プレビュー:
-https://app.revenuecat.com/projects/projbb7b9d1b/paywalls/{paywall_id}
+https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/paywalls/{paywall_id}
 ```
 
 ### Step 5. experiment_id 受取 → Cron 登録（エージェントが SSH で実行）
 
-Dais から `prexpXXXXXXXX` を受け取ったら即座に実行:
+ユーザーから `prexpXXXXXXXX` を受け取ったら即座に実行:
 
 ```bash
-# SSH: ssh anicca@100.99.82.95
+# SSH: ssh YOUR_AGENT_USER@YOUR_MAC_MINI_IP
 # ⚠️ ファイル全体上書き禁止。python3 で部分追加のみ。
 python3 -c "
 import json
-with open('/Users/anicca/.openclaw/cron/jobs.json', 'r') as f:
+with open('~/.openclaw/cron/jobs.json', 'r') as f:
     data = json.load(f)
 
 # 既存チェック（重複防止）
@@ -231,14 +229,14 @@ data['jobs'].append({
   'wakeMode': 'now',
   'payload': {
     'kind': 'agentTurn',
-    'message': 'Run paywall-ab skill in check_in mode. app_id: anicca. apps_config: /Users/anicca/.openclaw/workspace/paywall-ab/apps.json'
+    'message': 'Run paywall-ab skill in check_in mode. app_id: your_app. apps_config: ~/.openclaw/workspace/paywall-ab/apps.json'
   },
   'delivery': {'mode': 'none'},
   'enabled': True,
   'state': {}
 })
 
-with open('/Users/anicca/.openclaw/cron/jobs.json', 'w') as f:
+with open('~/.openclaw/cron/jobs.json', 'w') as f:
     json.dump(data, f, indent=2, ensure_ascii=False)
 print('DONE')
 "
@@ -252,7 +250,7 @@ print('DONE')
 実験ID: {experiment_id}
 開始日: {today}
 
-Variant A (現行): ofrng78a01eb506 (anicca)
+Variant A (現行): YOUR_DEFAULT_OFFERING_ID (anicca)
 Variant B (新AI生成): {new_offering_id}
 Traffic split: 50/50
 
@@ -293,7 +291,7 @@ Variant B（テスト中）: {offering_b_name}
   CTA: {cta_b}
 ━━━━━━━━━━━━━━━━━━━━
 📌 RC Dashboard で CVR を確認してください:
-https://app.revenuecat.com/projects/projbb7b9d1b/experiments/{experiment_id}
+https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/experiments/{experiment_id}
 
 結果を教えてください:
 • 「A勝ち」
@@ -320,10 +318,10 @@ https://app.revenuecat.com/projects/projbb7b9d1b/experiments/{experiment_id}
 ```
 入力: winner = "A" or "B"
 
-mcp__revenuecat__mcp_RC_list_offerings(project_id: "projbb7b9d1b")
+mcp__revenuecat__mcp_RC_list_offerings(project_id: "YOUR_RC_PROJECT_ID")
 → Variant A と B の Offering ID に対応する paywall_id を取得
 
-mcp__revenuecat__mcp_RC_get_app_store_config(project_id: "projbb7b9d1b")
+mcp__revenuecat__mcp_RC_get_app_store_config(project_id: "YOUR_RC_PROJECT_ID")
 または offering の paywall からテキストを取得
 → 勝者のタイトル・bullets・CTA
 → 敗者のタイトル・bullets・CTA
@@ -458,7 +456,7 @@ Anicca（習慣化・行動変容、7日間無料トライアル → $9.99/月�
 
 1. mcp__pencil__open_document で既存ペイウォールを開く
    対象: Anicca ペイウォールの .pen ファイル
-   パス: /Users/anicca/.openclaw/workspace/paywall-ab/paywall.pen（存在しない場合は作成不要 → Step 2へ）
+   パス: ~/.openclaw/workspace/paywall-ab/paywall.pen（存在しない場合は作成不要 → Step 2へ）
 
 2. mcp__pencil__batch_get でテキストノードを取得
 3. mcp__pencil__batch_design でタイトル・bullets・CTA のみ差し替え
@@ -473,7 +471,7 @@ Anicca（習慣化・行動変容、7日間無料トライアル → $9.99/月�
 ### Step 2. RC に新 Offering 作成（エージェントが MCP 実行）
 
 MODE 1 の Step 1〜3 を実行する:
-- 新 Offering 作成（lookup_key: `anicca_variant_{YYYYMMDD}`）
+- 新 Offering 作成（lookup_key: `your_app_variant_{YYYYMMDD}`）
 - パッケージ + Product 紐付け
 - AI Paywall 生成（デザインシステム JSON は下記参照）
 
@@ -485,7 +483,7 @@ MODE 1 の Step 1〜3 を実行する:
 
 ```javascript
 const result = await requestApproval({
-  channel: 'C091G3PKHL2',
+  channel: 'YOUR_SLACK_CHANNEL_ID',
   title:   '📝 新 Paywall バリアント確認',
   detail:  `パターン${pattern}（訴求軸: ${axis}）\n\nタイトル: ${title}\nbullets:\n  • ${bullets[0]}\n  • ${bullets[1]}\n  • ${bullets[2]}\nCTA: ${cta}\n\nこの内容で新 Offering を作成し、実験を開始しますか？`
 });
@@ -500,7 +498,7 @@ const result = await requestApproval({
 
 **RC API v2 に Experiment 作成エンドポイントは存在しない。Dashboard のみ。**
 
-Slack #metrics に投稿して Dais の操作を待つ:
+Slack #metrics に投稿して ユーザーの操作を待つ:
 
 ```
 🔧 新 Paywall バリアント準備完了
@@ -508,26 +506,26 @@ Slack #metrics に投稿して Dais の操作を待つ:
 パターン{N}のペイウォールが RC に生成されました。
 以下の手順で新しい Experiment を作成して、experiment_id をエージェントに教えてください。
 
-1. https://app.revenuecat.com/projects/bb7b9d1b/experiments → New Experiment
+1. https://app.revenuecat.com/projects/YOUR_PROJECT_SHORT_ID/experiments → New Experiment
 2. Variant A: {前回の勝者 offering_id}（昇格済み default）
 3. Variant B: {new_offering_id} ({lookup_key})
 4. Traffic split: 50/50 → Start
 5. URL に表示される experiment_id (prexpXXXXXXXX) を Claude Code に送ってください
 
 Paywall プレビュー:
-https://app.revenuecat.com/projects/projbb7b9d1b/paywalls/{paywall_id}
+https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/paywalls/{paywall_id}
 ```
 
 ### Step 5. experiment_id 受取 → apps.json 更新 + cron の Day カウンターリセット
 
-Dais から `prexpXXXXXXXX` を受け取ったら即座に実行:
+ユーザーから `prexpXXXXXXXX` を受け取ったら即座に実行:
 
 ```bash
-# SSH: ssh anicca@100.99.82.95
+# SSH: ssh YOUR_AGENT_USER@YOUR_MAC_MINI_IP
 # apps.json の active_experiment を更新（部分更新のみ）
 python3 -c "
 import json, datetime
-with open('/Users/anicca/.openclaw/workspace/paywall-ab/apps.json', 'r') as f:
+with open('~/.openclaw/workspace/paywall-ab/apps.json', 'r') as f:
     data = json.load(f)
 
 data['apps']['anicca']['active_experiment'] = {
@@ -537,7 +535,7 @@ data['apps']['anicca']['active_experiment'] = {
     'start_date': datetime.date.today().isoformat()
 }
 
-with open('/Users/anicca/.openclaw/workspace/paywall-ab/apps.json', 'w') as f:
+with open('~/.openclaw/workspace/paywall-ab/apps.json', 'w') as f:
     json.dump(data, f, indent=2, ensure_ascii=False)
 print('DONE')
 "
@@ -646,8 +644,8 @@ Traffic split: 50/50
 
 | バージョン | Offering ID | Paywall ID | 備考 |
 |-----------|------------|-----------|------|
-| v1 (2026-02-24) | `ofrng4c8d1f9d48` | `pwd08b47e7c59f464d` | ❌ 嘘コピー含む（廃棄） |
-| **v2 (2026-02-24)** | **`ofrng586631f021`** | **`pw5d8ebd3e8a674b3e`** | ✅ 実機能のみ（現行 Variant B） |
+| v1 (2026-02-24) | `YOUR_VARIANT_OFFERING_ID_V1` | `YOUR_PAYWALL_ID_V1` | ❌ 嘘コピー含む（廃棄） |
+| **v2 (2026-02-24)** | **`YOUR_VARIANT_B_OFFERING_ID`** | **`YOUR_PAYWALL_ID_V2`** | ✅ 実機能のみ（現行 Variant B） |
 
 ---
 
@@ -655,10 +653,10 @@ Traffic split: 50/50
 
 | 項目 | 値 |
 |------|-----|
-| Project ID | `projbb7b9d1b` |
+| Project ID | `YOUR_RC_PROJECT_ID` |
 | API Base | `https://api.revenuecat.com/v2` |
 | MCP ツール | `mcp__revenuecat__mcp_RC_*` |
-| RC Dashboard | `https://app.revenuecat.com/projects/bb7b9d1b/` |
+| RC Dashboard | `https://app.revenuecat.com/projects/YOUR_PROJECT_SHORT_ID/` |
 
 ---
 
@@ -681,6 +679,6 @@ Traffic split: 50/50
 - 2026-02-24: v1.0 初版作成
 - 2026-02-24: v1.1 Figma approach 廃棄 → RC AI自動生成に一本化
 - 2026-02-24: v1.2 アプリコード確認必須セクション追加。嘘コピー禁止リスト追加
-- 2026-02-24: v1.3 v1 paywall廃棄。v2 paywall (`pw5d8ebd3e8a674b3e`) 再生成
+- 2026-02-24: v1.3 v1 paywall廃棄。v2 paywall (`YOUR_PAYWALL_ID_V2`) 再生成
 - 2026-02-24: v1.4 Candle原則の嘘（30日分析/成長グラフ/頻度調整）を削除し実機能に置換。Mixpanelでのデータ取得フローを追加。slack-approvalタイムアウトなし明記。experiment_id=human操作フロー明確化。cron登録はpython3部分追加のみ（全体上書き禁止）。現在の実験状態セクション追加。
 - 2026-02-24: v2.0 **3日ごと人間確認フローに全面刷新。** evaluate モード削除。check_in / analyze / create_variant モード追加。cron スケジュール変更（毎週月曜 9am → 3日ごと 7am）。Human-in-the-loop パターンに移行。

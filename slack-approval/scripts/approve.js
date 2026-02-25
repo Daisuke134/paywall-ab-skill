@@ -16,7 +16,7 @@ const { SocketModeClient } = require('@slack/socket-mode');
  * Post a Block Kit approval message and wait for button click.
  *
  * @param {object} opts
- * @param {string} opts.channel  - Slack channel ID (e.g. 'C091G3PKHL2')
+ * @param {string} opts.channel  - Slack channel ID (e.g. 'C0XXXXXXXXX')
  * @param {string} opts.title    - Bold header text (e.g. '📧 メール返信')
  * @param {string} opts.detail   - Body text (mrkdwn, e.g. '宛先: 山田教授\n本文: ...')
  * @returns {Promise<'approved'|'denied'>}
