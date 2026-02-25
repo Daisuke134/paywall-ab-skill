@@ -55,7 +55,7 @@ timeout なし。ユーザーが押すまで待つ。
 ## セットアップ（初回のみ）
 
 ```bash
-cd .claude/skills/slack-approval/scripts
+cd ~/.openclaw/skills/slack-approval/scripts
 npm install @slack/web-api @slack/socket-mode
 ```
 

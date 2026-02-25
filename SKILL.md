@@ -77,13 +77,16 @@ apps_config: ~/.openclaw/workspace/paywall-ab/apps.json
 
 ## 環境変数（必須）
 
-| Key | 値の場所 |
-|-----|---------|
-| `REVENUECAT_V2_SECRET_KEY` | Mac Mini `.env` |
-| `REVENUECAT_PROJECT_ID` | `YOUR_RC_PROJECT_ID`（固定） |
-| `OPENAI_API_KEY` | Mac Mini `.env` |
-| `SLACK_BOT_TOKEN` | Mac Mini `.env` |
-| `SLACK_METRICS_CHANNEL` | `YOUR_SLACK_CHANNEL_ID`（#metrics） |
+| Key | 必須 | 値の場所 |
+|-----|------|---------|
+| `REVENUECAT_V2_SECRET_KEY` | ✅ | `~/.openclaw/.env` |
+| `OPENAI_API_KEY` | ✅ | `~/.openclaw/.env` |
+| `SLACK_BOT_TOKEN` | ✅ | `~/.openclaw/.env` |
+| `SLACK_APP_TOKEN` | ✅ | `~/.openclaw/.env`（Socket Mode用） |
+| `SLACK_METRICS_CHANNEL` | ✅ | `~/.openclaw/.env`（Slack Channel ID） |
+| `SLACK_APPROVER_USER_IDS` | ✅ | `~/.openclaw/.env`（承認ボタンを押せるユーザーIDのカンマ区切り） |
+
+**注意:** `rc_project_id` は `apps.json` で管理（環境変数不要）。
 
 ---
 
@@ -211,7 +214,7 @@ https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/paywalls/{paywall_id}
 # ⚠️ ファイル全体上書き禁止。python3 で部分追加のみ。
 python3 -c "
 import json
-with open('~/.openclaw/cron/jobs.json', 'r') as f:
+with open(__import__('pathlib').Path('~/.openclaw/cron/jobs.json').expanduser(), 'r') as f:
     data = json.load(f)
 
 # 既存チェック（重複防止）
@@ -236,7 +239,7 @@ data['jobs'].append({
   'state': {}
 })
 
-with open('~/.openclaw/cron/jobs.json', 'w') as f:
+with open(__import__('pathlib').Path('~/.openclaw/cron/jobs.json').expanduser(), 'w') as f:
     json.dump(data, f, indent=2, ensure_ascii=False)
 print('DONE')
 "
@@ -272,6 +275,20 @@ Traffic split: 50/50
 ```
 
 **⚠️ RC Experiments API は conversion data を返さない（404）。CVR はユーザーが RC Dashboard で確認する。**
+
+**⚠️ cron `0 7 */3 * *` は「月内の日付が3の倍数の日」に実行される（開始日起点ではない）。**
+このため、`check_in` 実行時に必ず以下のガードチェックを行う:
+```python
+from pathlib import Path
+import json, datetime
+apps = json.loads(Path('~/.openclaw/workspace/paywall-ab/apps.json').expanduser().read_text())
+start_date = datetime.date.fromisoformat(apps['apps'][app_id]['active_experiment']['start_date'])
+days_elapsed = (datetime.date.today() - start_date).days
+if days_elapsed < 3 or days_elapsed % 3 != 0:
+    # まだ3日経過していない or 実行タイミングがズレている → スキップ
+    print(f'SKIP: only {days_elapsed} days elapsed since start')
+    exit(0)
+```
 
 ### Step 2. Slack #metrics に Day N メッセージを送信
 
@@ -475,11 +492,11 @@ MODE 1 の Step 1〜3 を実行する:
 - パッケージ + Product 紐付け
 - AI Paywall 生成（デザインシステム JSON は下記参照）
 
-### Step 3. Slack 承認ゲート（`.cursor/skills/slack-approval/SKILL.md` 参照）
+### Step 3. Slack 承認ゲート（`~/.openclaw/skills/slack-approval/SKILL.md` 参照）
 
-⚠️ **タイムアウトなし。Daisが押すまで永久に待機する。急かさない。**
+⚠️ **タイムアウトなし。ユーザーが押すまで永久に待機する。急かさない。**
 
-→ `.cursor/skills/slack-approval/SKILL.md` を読んで `requestApproval()` を実行する
+→ `~/.openclaw/skills/slack-approval/SKILL.md` を読んで `requestApproval()` を実行する
 
 ```javascript
 const result = await requestApproval({
@@ -525,23 +542,23 @@ https://app.revenuecat.com/projects/YOUR_RC_PROJECT_ID/paywalls/{paywall_id}
 # apps.json の active_experiment を更新（部分更新のみ）
 python3 -c "
 import json, datetime
-with open('~/.openclaw/workspace/paywall-ab/apps.json', 'r') as f:
+with open(__import__('pathlib').Path('~/.openclaw/workspace/paywall-ab/apps.json').expanduser(), 'r') as f:
     data = json.load(f)
 
-data['apps']['anicca']['active_experiment'] = {
+data['apps'][app_id]['active_experiment'] = {  # app_id = cronメッセージで渡された値
     'experiment_id': '{NEW_EXPERIMENT_ID}',
     'variant_a_offering_id': '{WINNER_OFFERING_ID}',
     'variant_b_offering_id': '{NEW_OFFERING_ID}',
     'start_date': datetime.date.today().isoformat()
 }
 
-with open('~/.openclaw/workspace/paywall-ab/apps.json', 'w') as f:
+with open(__import__('pathlib').Path('~/.openclaw/workspace/paywall-ab/apps.json').expanduser(), 'w') as f:
     json.dump(data, f, indent=2, ensure_ascii=False)
 print('DONE')
 "
 ```
 
-**⚠️ cron の次回実行日は自動的に「今日から3日後」となる（`0 7 */3 * *` のため手動リセット不要）。**
+**⚠️ cron `0 7 */3 * *` は開始日起点の厳密3日間隔ではないため、`check_in` 実行時に Step 1 のガードチェックで差分を確認する。**
 
 ### Step 6. Slack #metrics に開始通知
 

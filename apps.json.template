@@ -2,7 +2,7 @@
   "apps": {
     "your_app": {
       "rc_project_id": "projXXXXXXXX",
-      "mixpanel_project_id": 0,
+      "mixpanel_project_id": null,
       "default_offering_id": "ofrngXXXXXXXX",
       "monthly_product_id": "prodXXXXXXXX",
       "slack_channel": "CXXXXXXXXXX",

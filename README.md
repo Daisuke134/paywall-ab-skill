@@ -86,15 +86,22 @@ npx skills install paywall-ab
 cp apps.json.template ~/.openclaw/workspace/paywall-ab/apps.json
 ```
 
-Edit `apps.json` with your actual IDs:
+Edit `apps.json` with your actual IDs (same schema as `apps.json.template`):
 ```json
 {
   "apps": {
     "your_app": {
       "rc_project_id": "projXXXXXXXX",
+      "mixpanel_project_id": 0,
       "default_offering_id": "ofrngXXXXXXXX",
       "monthly_product_id": "prodXXXXXXXX",
-      "slack_channel": "CXXXXXXXXXX"
+      "slack_channel": "CXXXXXXXXXX",
+      "active_experiment": {
+        "experiment_id": "prexpXXXXXXXX",
+        "variant_a_offering_id": "ofrngXXXXXXXX",
+        "variant_b_offering_id": "ofrngXXXXXXXX",
+        "start_date": "YYYY-MM-DD"
+      }
     }
   }
 }
@@ -105,13 +112,16 @@ Find these IDs:
 - `default_offering_id` → RC Dashboard → Offerings
 - `monthly_product_id` → RC Dashboard → Products
 - `slack_channel` → Right-click channel in Slack → Copy channel ID
+- `active_experiment` → Fill in after running `setup` mode and creating the RC Experiment
 
 ### 2. Set environment variables in `~/.openclaw/.env`
 ```bash
 REVENUECAT_V2_SECRET_KEY=...
+OPENAI_API_KEY=sk-...
 SLACK_BOT_TOKEN=xoxb-...
-SLACK_APP_TOKEN=xapp-...
+SLACK_APP_TOKEN=xapp-...        ← Required for Socket Mode (approval buttons)
 SLACK_METRICS_CHANNEL=CXXXXXXXXXX
+SLACK_APPROVER_USER_IDS=UXXXXXXXXXX  ← Slack user IDs allowed to click approval buttons (comma-separated)
 ```
 
 ### 3. Register the cron job
